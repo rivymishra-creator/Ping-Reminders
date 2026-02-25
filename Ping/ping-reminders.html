@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Ping — Free Reminders</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,300;1,9..144,500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0f0f0f;
+  --bg2:       #161616;
+  --card:      #1c1c1c;
+  --card2:     #222222;
+  --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(255,255,255,0.12);
+  --text:      #f2ede6;
+  --muted:     #888880;
+  --muted2:    #555550;
+  --lime:      #c8f135;
+  --lime-dim:  rgba(200,241,53,0.12);
+  --lime-dim2: rgba(200,241,53,0.2);
+  --red:       #ff5e5e;
+  --red-dim:   rgba(255,94,94,0.12);
+  --amber:     #ffb347;
+  --amber-dim: rgba(255,179,71,0.12);
+  --blue:      #7eb8f7;
+  --blue-dim:  rgba(126,184,247,0.12);
+  --r: 18px;
+  --r-sm: 11px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+/* Subtle gradient orbs in background */
+body::before {
+  content: '';
+  position: fixed;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(200,241,53,0.04) 0%, transparent 70%);
+  top: -200px; right: -200px;
+  pointer-events: none;
+}
+
+/* ── Shell ─────────────────────────────── */
+.shell {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* ── Sidebar ───────────────────────────── */
+.sidebar {
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  padding: 2rem 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.logo {
+  padding: 0 0.25rem;
+}
+
+.logo-mark {
+  font-family: 'Fraunces', serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  color: var(--text);
+}
+
+.logo-mark em {
+  font-style: italic;
+  color: var(--lime);
+}
+
+.logo-sub {
+  font-size: 0.7rem;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 0.25rem;
+}
+
+/* Nav */
+.nav { display: flex; flex-direction: column; gap: 2px; }
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--r-sm);
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.16s;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  letter-spacing: -0.01em;
+}
+
+.nav-btn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+.nav-btn.active { color: var(--text); background: rgba(255,255,255,0.08); }
+.nav-btn.active .nav-icon-wrap { background: var(--lime-dim); color: var(--lime); }
+
+.nav-icon-wrap {
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  background: rgba(255,255,255,0.05);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem;
+  transition: all 0.16s;
+  flex-shrink: 0;
+}
+
+/* ntfy status chip */
+.ntfy-chip {
+  margin-top: auto;
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-sm);
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+  transition: border-color 0.3s;
+}
+
+.ntfy-chip.ok { border-color: rgba(200,241,53,0.3); }
+
+.status-pip {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--muted2);
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.ntfy-chip.ok .status-pip {
+  background: var(--lime);
+  box-shadow: 0 0 10px var(--lime);
+}
+
+.chip-text { line-height: 1.4; }
+.chip-topic {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.7rem;
+  word-break: break-all;
+}
+
+/* ── Main ──────────────────────────────── */
+.main {
+  padding: 2.5rem 3rem;
+  overflow-y: auto;
+  max-height: 100vh;
+}
+
+/* ── Views ─────────────────────────────── */
+.view { display: none; }
+.view.active { display: block; animation: viewIn 0.22s ease; }
+
+@keyframes viewIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Page heading ──────────────────────── */
+.pg-head { margin-bottom: 2rem; }
+
+.pg-title {
+  font-family: 'Fraunces', serif;
+  font-size: 2.4rem;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+
+.pg-sub {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 0.4rem;
+}
+
+/* ── Stat strip ────────────────────────── */
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.85rem;
+  margin-bottom: 1.75rem;
+}
+
+.stat-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 1.2rem 1.4rem;
+  transition: border-color 0.2s;
+}
+
+.stat-box:hover { border-color: var(--border2); }
+
+.stat-num {
+  font-family: 'Fraunces', serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: -0.06em;
+  line-height: 1;
+  color: var(--text);
+}
+
+.stat-lbl {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 0.4rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* ── Add form ──────────────────────────── */
+.add-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 1.6rem;
+  margin-bottom: 1.75rem;
+}
+
+.card-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.big-input {
+  width: 100%;
+  background: var(--card2);
+  border: 1.5px solid var(--border2);
+  border-radius: var(--r-sm);
+  padding: 0.9rem 1.1rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  margin-bottom: 0.75rem;
+}
+
+.big-input::placeholder { color: var(--muted2); font-weight: 400; }
+.big-input:focus { border-color: var(--lime); box-shadow: 0 0 0 3px var(--lime-dim); }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 160px 130px 1fr auto;
+  gap: 0.6rem;
+  align-items: stretch;
+}
+
+.sm-input {
+  background: var(--card2);
+  border: 1.5px solid var(--border2);
+  border-radius: var(--r-sm);
+  padding: 0.72rem 0.9rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+  outline: none;
+  width: 100%;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.sm-input::placeholder { color: var(--muted2); }
+.sm-input:focus { border-color: var(--lime); box-shadow: 0 0 0 3px var(--lime-dim); }
+
+select.sm-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M5 6L0 0h10z' fill='%23666'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  padding-right: 2.2rem;
+  cursor: pointer;
+}
+
+select.sm-input option { background: #1c1c1c; }
+
+.btn-add {
+  background: var(--lime);
+  color: #0f0f0f;
+  border: none;
+  border-radius: var(--r-sm);
+  padding: 0 1.4rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.btn-add:hover { opacity: 0.88; transform: translateY(-1px); }
+.btn-add:active { transform: scale(0.97); opacity: 1; }
+
+/* ── Reminder cards ────────────────────── */
+.sec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.sec-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.r-list { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.r-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
+  animation: cardIn 0.22s ease both;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.r-card:hover { border-color: var(--border2); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+.r-card.off { opacity: 0.38; }
+
+.r-accent {
+  width: 3px;
+  border-radius: 4px;
+  align-self: stretch;
+  background: var(--lime);
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.r-card.off .r-accent { background: var(--muted2); }
+
+.r-body { flex: 1; min-width: 0; }
+
+.r-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.r-meta {
+  display: flex;
+  gap: 0.45rem;
+  margin-top: 0.3rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 100px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: rgba(255,255,255,0.06);
+  color: var(--muted);
+  border: 1px solid transparent;
+}
+
+.tag.lime   { background: var(--lime-dim);  color: var(--lime);  border-color: rgba(200,241,53,0.2); }
+.tag.amber  { background: var(--amber-dim); color: var(--amber); border-color: rgba(255,179,71,0.2); }
+.tag.blue   { background: var(--blue-dim);  color: var(--blue);  border-color: rgba(126,184,247,0.2); }
+
+.r-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+
+.ib {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem;
+  transition: all 0.15s;
+}
+
+.ib:hover { background: rgba(255,255,255,0.08); color: var(--text); border-color: rgba(255,255,255,0.2); }
+.ib.on    { background: var(--lime-dim); color: var(--lime); border-color: rgba(200,241,53,0.25); }
+.ib.x:hover { background: var(--red-dim); color: var(--red); border-color: rgba(255,94,94,0.25); }
+
+/* ── Empty ─────────────────────────────── */
+.empty {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: var(--muted2);
+}
+
+.empty-glyph {
+  font-family: 'Fraunces', serif;
+  font-size: 4rem;
+  opacity: 0.2;
+  margin-bottom: 0.75rem;
+}
+
+.empty-msg { font-size: 0.85rem; color: var(--muted); }
+
+/* ── Settings ──────────────────────────── */
+.settings-stack { display: flex; flex-direction: column; gap: 1.25rem; }
+
+.s-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 1.6rem;
+}
+
+.s-card-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1.15rem;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.3rem;
+}
+
+.s-card-desc {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+/* Steps */
+.steps { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.5rem; }
+
+.step {
+  display: flex;
+  gap: 0.8rem;
+  align-items: flex-start;
+  font-size: 0.83rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.step-n {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--lime-dim);
+  border: 1px solid rgba(200,241,53,0.25);
+  color: var(--lime);
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+}
+
+.step a { color: var(--lime); text-decoration: none; font-weight: 600; }
+.step a:hover { text-decoration: underline; }
+.step strong { color: var(--text); }
+
+/* Field */
+.f-group { margin-bottom: 1.1rem; }
+
+.f-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.45rem;
+}
+
+.f-input {
+  width: 100%;
+  background: var(--card2);
+  border: 1.5px solid var(--border2);
+  border-radius: var(--r-sm);
+  padding: 0.8rem 1rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.f-input::placeholder { color: var(--muted2); }
+.f-input:focus { border-color: var(--lime); box-shadow: 0 0 0 3px var(--lime-dim); }
+
+.f-hint {
+  font-size: 0.7rem;
+  color: var(--muted2);
+  margin-top: 0.35rem;
+}
+
+.btn-row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.75rem; }
+
+.btn-save {
+  background: var(--lime);
+  color: #0f0f0f;
+  border: none;
+  border-radius: var(--r-sm);
+  padding: 0.72rem 1.5rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: -0.01em;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.btn-save:hover { opacity: 0.86; transform: translateY(-1px); }
+
+.btn-test {
+  background: transparent;
+  color: var(--lime);
+  border: 1.5px solid rgba(200,241,53,0.35);
+  border-radius: var(--r-sm);
+  padding: 0.72rem 1.3rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-test:hover { background: var(--lime-dim); }
+
+/* Warning card */
+.warn-card {
+  background: rgba(255,179,71,0.06);
+  border: 1px solid rgba(255,179,71,0.2);
+  border-radius: var(--r);
+  padding: 1.2rem 1.4rem;
+  font-size: 0.82rem;
+  color: #d4a055;
+  line-height: 1.6;
+}
+
+.warn-title {
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+  font-size: 0.88rem;
+  color: var(--amber);
+}
+
+/* ── Toast ─────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 2rem; right: 2rem;
+  background: var(--card2);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  border-radius: var(--r-sm);
+  padding: 0.8rem 1.2rem;
+  font-size: 0.84rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+  transform: translateY(70px);
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
+  z-index: 9999;
+  max-width: 320px;
+}
+
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.ok   { border-color: rgba(200,241,53,0.4); }
+.toast.err  { border-color: rgba(255,94,94,0.4); }
+
+/* ── Responsive ────────────────────────── */
+@media (max-width: 800px) {
+  .shell { grid-template-columns: 1fr; }
+
+  .sidebar {
+    position: static;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 1rem;
+    gap: 0.75rem;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ntfy-chip { display: none; }
+  .nav { flex-direction: row; }
+  .nav-btn span.nav-label { display: none; }
+
+  .main { padding: 1.25rem 1rem; max-height: none; }
+  .pg-title { font-size: 1.8rem; }
+  .stat-strip { grid-template-columns: 1fr 1fr; }
+  .form-row { grid-template-columns: 1fr 1fr; }
+  .btn-add { grid-column: 1 / -1; padding: 0.72rem; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">P<em>i</em>ng</div>
+      <div class="logo-sub">ntfy.sh reminders</div>
+    </div>
+
+    <nav class="nav">
+      <button class="nav-btn active" onclick="go('dash')" id="nb-dash">
+        <span class="nav-icon-wrap">◈</span>
+        <span class="nav-label">Dashboard</span>
+      </button>
+      <button class="nav-btn" onclick="go('all')" id="nb-all">
+        <span class="nav-icon-wrap">≡</span>
+        <span class="nav-label">Reminders</span>
+      </button>
+      <button class="nav-btn" onclick="go('setup')" id="nb-setup">
+        <span class="nav-icon-wrap">⊙</span>
+        <span class="nav-label">Setup</span>
+      </button>
+    </nav>
+
+    <div class="ntfy-chip" id="ntfyChip">
+      <div class="status-pip" id="statusPip"></div>
+      <div class="chip-text">
+        <div id="chipLabel">ntfy not configured</div>
+        <div class="chip-topic" id="chipTopic"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main">
+
+    <!-- Dashboard -->
+    <div class="view active" id="v-dash">
+      <div class="pg-head">
+        <div class="pg-title">Good <span id="greeting"></span> 👋</div>
+        <div class="pg-sub">Your reminders will ping your phone via ntfy</div>
+      </div>
+
+      <div class="stat-strip">
+        <div class="stat-box">
+          <div class="stat-num" id="sTotal">0</div>
+          <div class="stat-lbl">Total</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="sActive">0</div>
+          <div class="stat-lbl">Active</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="sToday">0</div>
+          <div class="stat-lbl">Today</div>
+        </div>
+      </div>
+
+      <div class="add-card">
+        <div class="card-label">New Reminder</div>
+        <input class="big-input" id="rTitle" type="text" placeholder="What do you need to remember?" />
+        <div class="form-row">
+          <input class="sm-input" id="rTime" type="time" />
+          <input class="sm-input" id="rDate" type="date" />
+          <select class="sm-input" id="rRecur">
+            <option value="once">One time</option>
+            <option value="daily">Every day</option>
+            <option value="weekdays">Weekdays only</option>
+            <option value="weekly">Every week</option>
+          </select>
+          <button class="btn-add" onclick="addR()">Add →</button>
+        </div>
+      </div>
+
+      <div class="sec-head">
+        <div class="sec-label">Today's Schedule</div>
+      </div>
+      <div class="r-list" id="todayList"></div>
+    </div>
+
+    <!-- All reminders -->
+    <div class="view" id="v-all">
+      <div class="pg-head">
+        <div class="pg-title">All Reminders</div>
+        <div class="pg-sub">Manage everything in one place</div>
+      </div>
+      <div class="sec-head">
+        <div class="sec-label">Scheduled</div>
+        <div class="sec-label" id="totalBadge"></div>
+      </div>
+      <div class="r-list" id="allList"></div>
+      <div class="empty" id="emptyMsg" style="display:none">
+        <div class="empty-glyph">∅</div>
+        <div class="empty-msg">No reminders yet — add one from the dashboard</div>
+      </div>
+    </div>
+
+    <!-- Setup -->
+    <div class="view" id="v-setup">
+      <div class="pg-head">
+        <div class="pg-title">Setup</div>
+        <div class="pg-sub">Connect ntfy.sh — completely free, no account needed</div>
+      </div>
+
+      <div class="settings-stack">
+
+        <div class="s-card">
+          <div class="s-card-title">Connect ntfy.sh</div>
+          <div class="s-card-desc">ntfy is a free, open-source push notification service. Install the app, enter a topic name below, and you're done — no account, no credit card, no expiry.</div>
+
+          <div class="steps">
+            <div class="step">
+              <div class="step-n">1</div>
+              <div>Download the free <strong>ntfy app</strong> — <a href="https://play.google.com/store/apps/details?id=io.heckel.ntfy" target="_blank">Android (Play Store)</a> or <a href="https://apps.apple.com/app/ntfy/id1625396347" target="_blank">iOS (App Store)</a></div>
+            </div>
+            <div class="step">
+              <div class="step-n">2</div>
+              <div>Make up a <strong>unique topic name</strong> — something hard to guess like <code style="background:rgba(255,255,255,0.07);padding:0.1rem 0.4rem;border-radius:4px;font-size:0.78rem">maya-reminders-5821</code></div>
+            </div>
+            <div class="step">
+              <div class="step-n">3</div>
+              <div>In the ntfy app, tap <strong>+</strong> and subscribe to your topic</div>
+            </div>
+            <div class="step">
+              <div class="step-n">4</div>
+              <div>Paste the same topic name below and hit <strong>Save</strong></div>
+            </div>
+            <div class="step">
+              <div class="step-n">5</div>
+              <div>Hit <strong>Send Test</strong> to confirm it's working — you'll get a notification!</div>
+            </div>
+          </div>
+
+          <div class="f-group">
+            <label class="f-label">Your ntfy Topic Name</label>
+            <input class="f-input" id="cfgTopic" type="text" placeholder="your-unique-topic-name" />
+            <div class="f-hint">Make it long and unique — anyone who knows this name can send you notifications</div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn-save" onclick="saveCfg()">Save</button>
+            <button class="btn-test" onclick="sendTest()">Send Test 🔔</button>
+          </div>
+        </div>
+
+        <div class="warn-card">
+          <div class="warn-title">⚠️ Keep this tab open</div>
+          Reminders are checked every 30 seconds while this page is open. For best results, keep Ping pinned as a tab or add it to your home screen. Notifications won't fire when the page is closed — but all reminders are saved locally and will resume when you reopen it.
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────
+let reminders = JSON.parse(localStorage.getItem('ping_v3') || '[]');
+let cfg = JSON.parse(localStorage.getItem('ping_cfg_v3') || '{}');
+let ticker = null;
+
+const RL = { once:'Once', daily:'Daily', weekdays:'Weekdays', weekly:'Weekly' };
+
+// ── Boot ───────────────────────────────────────────
+window.onload = () => {
+  const h = new Date().getHours();
+  document.getElementById('greeting').textContent = h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening';
+
+  // Defaults
+  const d = new Date(); d.setHours(d.getHours()+1,0,0,0);
+  document.getElementById('rTime').value = d.toTimeString().slice(0,5);
+  document.getElementById('rDate').value = new Date().toISOString().slice(0,10);
+
+  if (cfg.topic) document.getElementById('cfgTopic').value = cfg.topic;
+
+  updateChip();
+  render();
+  startTicker();
+};
+
+// ── Nav ────────────────────────────────────────────
+function go(view) {
+  ['dash','all','setup'].forEach(v => {
+    document.getElementById('v-'+v).classList.toggle('active', v===view);
+    document.getElementById('nb-'+v).classList.toggle('active', v===view);
+  });
+  render();
+}
+
+// ── Render ─────────────────────────────────────────
+function render() {
+  const today = new Date().toISOString().slice(0,10);
+  const dow = new Date().getDay();
+  const wkday = dow >= 1 && dow <= 5;
+
+  const firesOn = r => {
+    if (!r.enabled) return false;
+    if (r.recur==='once')     return r.date===today;
+    if (r.recur==='daily')    return true;
+    if (r.recur==='weekdays') return wkday;
+    if (r.recur==='weekly')   return new Date(r.id).getDay()===dow;
+    return false;
+  };
+
+  // Stats
+  document.getElementById('sTotal').textContent  = reminders.length;
+  document.getElementById('sActive').textContent = reminders.filter(r=>r.enabled).length;
+  document.getElementById('sToday').textContent  = reminders.filter(firesOn).length;
+
+  // Today
+  const todayRems = reminders.filter(firesOn).sort((a,b)=>a.time.localeCompare(b.time));
+  const todayEl = document.getElementById('todayList');
+  todayEl.innerHTML = todayRems.length
+    ? todayRems.map(cardHTML).join('')
+    : '<div style="padding:2.5rem 1rem;text-align:center;color:var(--muted2);font-size:0.83rem">Nothing firing today</div>';
+
+  // All
+  const allEl = document.getElementById('allList');
+  const empEl = document.getElementById('emptyMsg');
+  document.getElementById('totalBadge').textContent = reminders.length ? reminders.length + ' total' : '';
+
+  if (!reminders.length) {
+    allEl.innerHTML = '';
+    empEl.style.display = 'block';
+  } else {
+    empEl.style.display = 'none';
+    allEl.innerHTML = [...reminders].reverse().map(cardHTML).join('');
+  }
+}
+
+function cardHTML(r) {
+  const isRecur = r.recur !== 'once';
+  return `
+  <div class="r-card ${r.enabled?'':'off'}" id="rc-${r.id}">
+    <div class="r-accent"></div>
+    <div class="r-body">
+      <div class="r-name">${x(r.title)}</div>
+      <div class="r-meta">
+        <span class="tag">⏰ ${r.time}</span>
+        ${r.date ? `<span class="tag">📅 ${r.date}</span>` : ''}
+        <span class="tag ${isRecur?'amber':''}">${RL[r.recur]}</span>
+        ${r.enabled ? '<span class="tag lime">● Active</span>' : '<span class="tag">Paused</span>'}
+      </div>
+    </div>
+    <div class="r-actions">
+      <button class="ib ${r.enabled?'on':''}" title="${r.enabled?'Pause':'Resume'}" onclick="toggleR(${r.id})">${r.enabled?'🔔':'🔕'}</button>
+      <button class="ib x" title="Delete" onclick="delR(${r.id})">✕</button>
+    </div>
+  </div>`;
+}
+
+function x(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── CRUD ───────────────────────────────────────────
+function addR() {
+  const title  = document.getElementById('rTitle').value.trim();
+  const time   = document.getElementById('rTime').value;
+  const date   = document.getElementById('rDate').value;
+  const recur  = document.getElementById('rRecur').value;
+
+  if (!title)                    return toast('err','⚠️ Enter a reminder title');
+  if (!time)                     return toast('err','⚠️ Pick a time');
+  if (recur==='once' && !date)   return toast('err','⚠️ Pick a date');
+
+  reminders.push({ id:Date.now(), title, time, date:recur==='once'?date:null, recur, enabled:true, lastFired:null });
+  save(); render();
+  document.getElementById('rTitle').value = '';
+  toast('ok','✅ Reminder added!');
+}
+
+function toggleR(id) {
+  const r = reminders.find(r=>r.id===id);
+  if (r) { r.enabled=!r.enabled; save(); render(); }
+}
+
+function delR(id) {
+  reminders = reminders.filter(r=>r.id!==id);
+  save(); render();
+  toast('','🗑 Deleted');
+}
+
+function save() { localStorage.setItem('ping_v3', JSON.stringify(reminders)); }
+
+// ── Config ─────────────────────────────────────────
+function saveCfg() {
+  cfg.topic = document.getElementById('cfgTopic').value.trim().replace(/\s+/g,'-');
+  document.getElementById('cfgTopic').value = cfg.topic;
+  localStorage.setItem('ping_cfg_v3', JSON.stringify(cfg));
+  updateChip();
+  toast('ok','✅ Saved! Subscribe to "' + cfg.topic + '" in the ntfy app.');
+}
+
+function updateChip() {
+  const chip  = document.getElementById('ntfyChip');
+  const pip   = document.getElementById('statusPip');
+  const label = document.getElementById('chipLabel');
+  const topic = document.getElementById('chipTopic');
+
+  if (cfg.topic) {
+    chip.classList.add('ok');
+    pip.classList.add('connected');
+    label.textContent = 'ntfy connected';
+    topic.textContent = cfg.topic;
+  } else {
+    chip.classList.remove('ok');
+    pip.classList.remove('connected');
+    label.textContent = 'ntfy not configured';
+    topic.textContent = '';
+  }
+}
+
+// ── ntfy push (no-CORS via hidden form) ───────────────
+function pushNtfy(msg, title='Ping Reminder') {
+  return new Promise(resolve => {
+    if (!cfg.topic) {
+      toast('err','⚙️ Set up your ntfy topic in Setup first');
+      return resolve(false);
+    }
+
+    // Build URL with message + title as query params (ntfy supports GET)
+    const url = `https://ntfy.sh/${encodeURIComponent(cfg.topic)}`
+      + `?title=${encodeURIComponent(title)}`
+      + `&message=${encodeURIComponent(msg)}`
+      + `&tags=bell`
+      + `&priority=default`;
+
+    // Use a hidden <img> ping — no CORS restrictions on image requests
+    const img = new Image();
+    const timer = setTimeout(() => resolve(false), 6000);
+    img.onload = img.onerror = () => { clearTimeout(timer); resolve(true); };
+    img.src = url;
+  });
+}
+
+async function sendTest() {
+  saveCfg();
+  toast('','📤 Sending test…');
+  const ok = await pushNtfy('🔔 Ping is working! Your reminders will arrive here.', 'Ping Test');
+  toast(ok?'ok':'err', ok ? '✅ Test sent! Check your ntfy app.' : '❌ Failed — check your topic name');
+}
+
+// ── Ticker ─────────────────────────────────────────
+function startTicker() {
+  if (ticker) clearInterval(ticker);
+  ticker = setInterval(checkDue, 30000);
+  checkDue();
+}
+
+function checkDue() {
+  const now    = new Date();
+  const today  = now.toISOString().slice(0,10);
+  const hhmm   = now.toTimeString().slice(0,5);
+  const dow    = now.getDay();
+  const wkday  = dow >= 1 && dow <= 5;
+
+  reminders.forEach(async r => {
+    if (!r.enabled || r.time !== hhmm) return;
+    const key = today + '_' + hhmm;
+    if (r.lastFired === key) return;
+
+    let fire = false;
+    if (r.recur==='once')     fire = r.date===today;
+    if (r.recur==='daily')    fire = true;
+    if (r.recur==='weekdays') fire = wkday;
+    if (r.recur==='weekly')   fire = new Date(r.id).getDay()===dow;
+
+    if (fire) {
+      r.lastFired = key;
+      save();
+      const ok = await pushNtfy(r.title, '🔔 Reminder');
+      if (ok) toast('ok', `📱 Sent: "${r.title}"`);
+    }
+  });
+}
+
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkDue(); });
+
+// ── Toast ──────────────────────────────────────────
+function toast(type, msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className   = 'toast ' + (type||'') + ' show';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 3400);
+}
+</script>
+</body>
+</html>
